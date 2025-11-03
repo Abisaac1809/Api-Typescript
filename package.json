@@ -1,0 +1,30 @@
+{
+  "name": "api-typescript",
+  "version": "0.0.1",
+  "description": "Una API para gestionar los datos de inversionistas, negocios, etc",
+  "homepage": "https://github.com/Abisaac1809/Api-Typescript#readme",
+  "bugs": {
+    "url": "https://github.com/Abisaac1809/Api-Typescript/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abisaac1809/Api-Typescript.git"
+  },
+  "license": "ISC",
+  "author": "Abisaac Carmona",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "tsc && node ./build/server.js"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  }
+}
