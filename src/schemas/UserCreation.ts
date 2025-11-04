@@ -1,0 +1,14 @@
+import {z} from "zod";
+
+export const UserSchema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+    lastname: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
+    age: z.number().int("La edad debe ser un número entero").positive("La edad debe ser positiva").max(120, "La edad debe ser un máximo de 110 años"),
+    IdNumber: z.number().int("El ID debe ser un número entero").positive("El ID debe ser positivo"),
+    phoneNumber: z.number().positive("El número de teléfono debe ser positivo"),
+    email: z.email("El formato del correo electrónico es incorrecto"),
+    password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres")
+})
+
+export type User = z.infer<typeof UserSchema>;
