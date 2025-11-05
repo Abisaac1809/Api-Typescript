@@ -1,7 +1,7 @@
 import { EnviromentalVariableNotImplemented } from "../errors/internalServerErrors";
 import { UserAlreadyExists } from "../errors/conflictErrors";
 import {Request, Response} from "express";
-import IAuthService from "../interfaces/IAuthService";
+import IAuthService from "../interfaces/IServices/IAuthService";
 import PublicUser from "../types/publicUser";
 import jwt from "jsonwebtoken";
 
@@ -36,6 +36,13 @@ export default class AuthController {
                     });
         }
         catch (error) {
+            if (error instanceof UserAlreadyExists) {
+                return res
+                        .status(409)
+                        .json({
+                            message: error.message
+                        });
+            }
             return res
                     .status(500)
                     .json({

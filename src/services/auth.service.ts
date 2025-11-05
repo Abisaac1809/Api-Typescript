@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { User } from "../schemas/UserCreation";
 import PublicUser from "../types/publicUser";
-import IUserRepository from "../interfaces/IUserRepository";
+import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
 import { EnviromentalVariableNotImplemented,} from "../errors/internalServerErrors";
 import { UserAlreadyExists } from "../errors/conflictErrors";

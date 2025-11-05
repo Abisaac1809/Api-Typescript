@@ -1,5 +1,5 @@
-import PublicUser from "../types/publicUser";
-import { User } from "../schemas/UserCreation";
+import PublicUser from "../../types/publicUser";
+import { User } from "../../schemas/UserCreation";
 
 export default interface IUserRepository {
     createUser(user: User): Promise<PublicUser>;

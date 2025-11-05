@@ -1,6 +1,6 @@
 import PublicUser from "../types/publicUser";
 import { User } from "../schemas/UserCreation";
-import IUserRepository from "../interfaces/IUserRepository";
+import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
 export default class UserRepositoryLocal implements IUserRepository {
     private users: User[];
