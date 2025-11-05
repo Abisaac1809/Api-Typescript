@@ -1,9 +1,11 @@
-import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
-import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/conflictErrors";
+import jwt from "jsonwebtoken";
 import {Request, Response} from "express";
+
 import IAuthService from "../interfaces/IServices/IAuthService";
 import PublicUser from "../types/publicUser";
-import jwt from "jsonwebtoken";
+
+import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
+import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/conflictErrors";
 
 export default class AuthController {
     private authService: IAuthService;

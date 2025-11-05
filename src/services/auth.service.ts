@@ -1,8 +1,8 @@
 import { hash, compare } from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
-import { email, z } from "zod";
+import { z } from "zod";
 
-import { User, UserLoginRequest } from "../schemas/users.schemas";
+import { User, UserToCreateType, UserToLoginType } from "../schemas/users.schemas";
 import PublicUser from "../types/publicUser";
 import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
@@ -16,7 +16,7 @@ export default class AuthService {
         this.userRepository = userRepository;
     }
 
-    async register(user: User): Promise<PublicUser> {
+    async register(user: UserToCreateType): Promise<PublicUser> {
         const userInDB: (User | undefined)= await this.userRepository.findUserByEmail(user.email);
         if (userInDB) {
             throw new UserAlreadyExistsError("El usuario ya existe");
@@ -46,7 +46,7 @@ export default class AuthService {
         }
     }
 
-    async login(userToLogin: UserLoginRequest): Promise<PublicUser> {
+    async login(userToLogin: UserToLoginType): Promise<PublicUser> {
         const emailFormatValidator = z.email();
         const attemptToValidateEmail = emailFormatValidator.safeParse(userToLogin.identifier);
 
@@ -67,7 +67,7 @@ export default class AuthService {
 
         const passwordIsValid: boolean = await compare(userToLogin.password, user.password);
 
-        if (! passwordIsValid) {
+        if ( !passwordIsValid ) {
             throw new InvalidCredentialsError("Credenciales inválidas");
         }
 
@@ -76,20 +76,14 @@ export default class AuthService {
     }
 
     private toPublicUser(user: User): PublicUser {
-        // Falta arreglar que el esquema y el tipo de user sean distintos para evitar este tipo de validaciones
-        if (user.id){
-            return {
-                id: user.id,
-                name: user.name,
-                lastname: user.lastname,
-                age: user.age,
-                identificationNumber: user.identificationNumber,
-                phoneNumber: user.phoneNumber,
-                email: user.email
-            }
-        } 
-        else {
-            throw new Error("Usuario inválido");
+        return {
+            id: user.id,
+            name: user.name,
+            lastname: user.lastname,
+            age: user.age,
+            identificationNumber: user.identificationNumber,
+            phoneNumber: user.phoneNumber,
+            email: user.email
         }
     }
 }

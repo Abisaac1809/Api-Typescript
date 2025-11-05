@@ -1,4 +1,3 @@
-import PublicUser from "../types/publicUser";
 import { User } from "../schemas/users.schemas";
 import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
