@@ -81,7 +81,7 @@ export default class AuthService {
             return {
                 id: user.id,
                 name: user.name,
-                lastname: user.name,
+                lastname: user.lastname,
                 age: user.age,
                 identificationNumber: user.identificationNumber,
                 phoneNumber: user.phoneNumber,
