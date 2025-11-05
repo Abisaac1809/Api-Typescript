@@ -3,7 +3,7 @@ type PublicUser = {
     name: string;
     lastname: string;
     age: number;
-    IdNumber: number;
+    identificationNumber: number;
     phoneNumber: number;
     email: string;
 }

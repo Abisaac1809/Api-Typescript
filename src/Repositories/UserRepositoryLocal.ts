@@ -1,5 +1,5 @@
 import PublicUser from "../types/publicUser";
-import { User } from "../schemas/UserCreation";
+import { User } from "../schemas/users.schemas";
 import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
 export default class UserRepositoryLocal implements IUserRepository {
@@ -9,43 +9,29 @@ export default class UserRepositoryLocal implements IUserRepository {
         this.users = [];
     }
 
-    async createUser(user: User): Promise<PublicUser> {
-        if (!user.id) {
-            throw new Error("User must have an id");
-        }
-
+    async createUser(user: User): Promise<User> {
         this.users.push(user);
-
-        const newPublicUser: PublicUser = {
-            id: user.id,
-            name: user.name,
-            lastname: user.lastname,
-            age: user.age,
-            IdNumber: user.IdNumber,
-            phoneNumber: user.phoneNumber,
-            email: user.email
-        };
-        return newPublicUser
+        return user;
         ;
     }
 
-    async findUserByEmail(email: string): Promise<PublicUser | undefined> {
+    async findUserByEmail(email: string): Promise<User | undefined> {
         const user = this.users.find((user) => user.email === email);
-        if (!user) {
+        
+        if ( !user ) {
             return undefined;
         }
-        if (!user.id) {
-            throw new Error("User must have an id");
+        
+        return user;
+    }
+
+    async findUserByIdentificationNumber(identificationNumber: number): Promise<User | undefined> {
+        const user = this.users.find((user) => identificationNumber == user.identificationNumber);
+
+        if ( !user ) {
+            return undefined;
         }
-        const publicUser: PublicUser = {
-            id: user.id,
-            name: user.name,
-            lastname: user.lastname,
-            age: user.age,
-            IdNumber: user.IdNumber,
-            phoneNumber: user.phoneNumber,
-            email: user.email
-        };
-        return publicUser;
+
+        return user;
     }
 }

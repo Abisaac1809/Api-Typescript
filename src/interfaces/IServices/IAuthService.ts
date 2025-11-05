@@ -1,6 +1,7 @@
-import { User } from "../schemas/UserCreation";
-import PublicUser from "../types/publicUser";
+import { User, UserLoginRequest } from "../../schemas/users.schemas";
+import PublicUser from "../../types/publicUser";
 
 export default interface IAuthService {
-    register(user: User): Promise<PublicUser>;
+    register(userToRegister: User): Promise<PublicUser>;
+    login(userToLogin: UserLoginRequest): Promise<PublicUser>;
 }

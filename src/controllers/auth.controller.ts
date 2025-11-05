@@ -1,5 +1,5 @@
-import { EnviromentalVariableNotImplemented } from "../errors/internalServerErrors";
-import { UserAlreadyExists } from "../errors/conflictErrors";
+import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
+import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/conflictErrors";
 import {Request, Response} from "express";
 import IAuthService from "../interfaces/IServices/IAuthService";
 import PublicUser from "../types/publicUser";
@@ -14,11 +14,11 @@ export default class AuthController {
 
     register = async (req: Request, res: Response) => {
         if (!process.env.JWT_SECRET_KEY) {
-            throw new EnviromentalVariableNotImplemented("JWT_SECRET_KEY was not implemented as a enviromental variable");
+            throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
         }
     
         try {
-            const newPublicUser:PublicUser = await this.authService.register(req.body);
+            const newPublicUser: PublicUser = await this.authService.register(req.body);
             const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
             const token = jwt.sign(newPublicUser, JWT_SECRET_KEY, {expiresIn: "1h"});
 
@@ -36,7 +36,7 @@ export default class AuthController {
                     });
         }
         catch (error) {
-            if (error instanceof UserAlreadyExists) {
+            if (error instanceof UserAlreadyExistsError) {
                 return res
                         .status(409)
                         .json({
@@ -50,5 +50,44 @@ export default class AuthController {
                     });
         }
     }
+
+    login = async (req: Request, res: Response) => {
+        if ( !process.env.JWT_SECRET_KEY) {
+            throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
+        }
+        
+        try {
+            const publicUser: PublicUser = await this.authService.login(req.body);
+            const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+            const token = jwt.sign(publicUser, JWT_SECRET_KEY, {expiresIn: "1h"});
+
+            return res
+                    .status(200)
+                    .cookie("access_token", token, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                        sameSite: "strict",
+                        maxAge: 3600
+                    })
+                    .json({
+                        message: "OK", 
+                        user: publicUser
+                    });
+        }
+        catch (error) {
+            if (error instanceof InvalidCredentialsError) {
+                return res
+                        .status(error.statusCode)
+                        .json({
+                            message: error.message
+                        });
+            }
+            return res
+                    .status(500)
+                    .json({
+                        message: "Internal Server Error", 
+                    });
+        }
+    }    
 }
 
