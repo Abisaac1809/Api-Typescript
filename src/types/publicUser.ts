@@ -1,4 +1,4 @@
-export type PublicUser = {
+type PublicUser = {
     id: string;
     name: string;
     lastname: string;
@@ -7,3 +7,5 @@ export type PublicUser = {
     phoneNumber: number;
     email: string;
 }
+
+export default PublicUser;

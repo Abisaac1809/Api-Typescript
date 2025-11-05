@@ -1,8 +1,8 @@
-import {PublicUser as PublicUser} from "../types/publicUser";
+import PublicUser from "../types/publicUser";
 import { User } from "../schemas/UserCreation";
-import { IUserRepository } from "../interfaces/IUserRepository";
+import IUserRepository from "../interfaces/IUserRepository";
 
-export class UserRepositoryLocal implements IUserRepository {
+export default class UserRepositoryLocal implements IUserRepository {
     private users: User[];
 
     constructor() {
