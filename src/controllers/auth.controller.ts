@@ -91,5 +91,17 @@ export default class AuthController {
                     });
         }
     }    
+
+    logout = async (req: Request, res: Response) => {
+        res
+            .clearCookie("access_token", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                maxAge: 3600
+            })
+            .status(204)
+            .end();
+    }
 }
 

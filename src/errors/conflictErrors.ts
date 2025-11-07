@@ -15,3 +15,12 @@ export class InvalidCredentialsError extends Error {
         super(message);
     }
 }
+
+export class UnauthorizedRequestError extends Error {
+    public readonly name: string = "UnauthorizedRequestError";
+    public readonly statusCode: number = 401;
+
+    constructor(message: string) {
+        super(message);
+    }
+}
