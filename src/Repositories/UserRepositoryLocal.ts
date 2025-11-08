@@ -15,22 +15,24 @@ export default class UserRepositoryLocal implements IUserRepository {
     }
 
     async findUserByEmail(email: string): Promise<User | undefined> {
-        const user = this.users.find((user) => user.email === email);
-        
-        if ( !user ) {
-            return undefined;
-        }
-        
-        return user;
+        return this.users.find((user) => user.email === email);
     }
 
     async findUserByIdentificationNumber(identificationNumber: number): Promise<User | undefined> {
-        const user = this.users.find((user) => identificationNumber == user.identificationNumber);
+        return this.users.find((user) => identificationNumber == user.identificationNumber);
+    }
 
-        if ( !user ) {
-            return undefined;
+    async findUserById(id: string): Promise<User | undefined> {
+        return this.users.find((user) => user.id === id);
+    }
+    
+    async save(userToSave: User): Promise<void> {
+        const userIndex: number = this.users.findIndex((user) => user.id === userToSave.id);
+
+        if (userIndex === -1) {
+            throw Error("No ha sido creado antes el usuario")
         }
 
-        return user;
+        this.users[userIndex] = userToSave;
     }
 }

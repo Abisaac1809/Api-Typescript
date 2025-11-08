@@ -1,11 +1,10 @@
-import jwt from "jsonwebtoken";
 import {Request, Response} from "express";
 
 import IAuthService from "../interfaces/IServices/IAuthService";
 import PublicUser from "../types/publicUser";
 
-import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
 import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/conflictErrors";
+import { JWTParser } from "../utils/jwtParser";
 
 export default class AuthController {
     private authService: IAuthService;
@@ -15,18 +14,20 @@ export default class AuthController {
     }
 
     register = async (req: Request, res: Response) => {
-        if (!process.env.JWT_SECRET_KEY) {
-            throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
-        }
-    
         try {
             const newPublicUser: PublicUser = await this.authService.register(req.body);
-            const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
-            const token = jwt.sign(newPublicUser, JWT_SECRET_KEY, {expiresIn: "1h"});
+            const accessToken: string = this.authService.getAccessToken(newPublicUser);
+            const refeshToken: string = this.authService.getRefreshToken(newPublicUser);
 
             return res
                     .status(201)
-                    .cookie("access_token", token, {
+                    .cookie("access_token", accessToken, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                        sameSite: "strict",
+                        maxAge: 3600
+                    })
+                    .cookie("refresh_token", refeshToken, {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === "production",
                         sameSite: "strict",
@@ -53,19 +54,21 @@ export default class AuthController {
         }
     }
 
-    login = async (req: Request, res: Response) => {
-        if ( !process.env.JWT_SECRET_KEY) {
-            throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
-        }
-        
+    login = async (req: Request, res: Response) => {        
         try {
             const publicUser: PublicUser = await this.authService.login(req.body);
-            const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
-            const token = jwt.sign(publicUser, JWT_SECRET_KEY, {expiresIn: "1h"});
+            const accessToken: string = this.authService.getAccessToken(publicUser);
+            const refeshToken: string = this.authService.getRefreshToken(publicUser);
 
             return res
                     .status(200)
-                    .cookie("access_token", token, {
+                    .cookie("access_token", accessToken, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                        sameSite: "strict",
+                        maxAge: 3600
+                    })
+                    .cookie("refresh_token", refeshToken, {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === "production",
                         sameSite: "strict",
@@ -102,6 +105,6 @@ export default class AuthController {
             })
             .status(204)
             .end();
-    }
+    };
 }
 

@@ -1,8 +1,10 @@
 import { hash, compare } from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
+import jwt from "jsonwebtoken";
 
 import { User, UserToCreateType, UserToLoginType } from "../schemas/users.schemas";
+import { AccessTokenPayload, RefreshTokenPayload } from "../types/authTokensPayload";
 import PublicUser from "../types/publicUser";
 import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
@@ -86,4 +88,53 @@ export default class AuthService {
             email: user.email
         }
     }
+
+    public getAccessToken(user: PublicUser): string {
+        if ( !process.env.JWT_SECRET_KEY) {
+            throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
+        }
+
+        const JWT_SECRET_KEY: string = process.env.JWT_SECRET_KEY;
+        const access_token_payload: AccessTokenPayload = this.getAccessTokenPayload(user);
+        const token: string = jwt.sign(access_token_payload, JWT_SECRET_KEY, {"expiresIn": "1h"})
+        return token;
+    }
+
+    private getAccessTokenPayload(user: PublicUser): AccessTokenPayload {
+        const minutesUntilJwtExpires: number = 15;
+        const secondsUntilJwtExpires: number = minutesUntilJwtExpires * 60;
+        const nowInMs: number = Date.now();
+        const expirationTimeInSeconds = Math.floor(nowInMs / 1000) + secondsUntilJwtExpires;
+
+        return {
+            userId: user.id,
+            iat: new Date().toISOString(),
+            exp: expirationTimeInSeconds
+        }
+    }
+
+    public getRefreshToken(publicUser: PublicUser): string {
+        if ( !process.env.JWT_SECRET_KEY) {
+            throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
+        }
+
+        const JWT_SECRET_KEY: string = process.env.JWT_SECRET_KEY;
+        const refresh_token_payload: RefreshTokenPayload = this.getRefreshTokenPayload(publicUser);
+        const token: string = jwt.sign(refresh_token_payload, JWT_SECRET_KEY, {"expiresIn": "7d"})
+        return token;
+    }
+
+    private getRefreshTokenPayload(user: PublicUser): RefreshTokenPayload {
+        const minutesUntilJwtExpires: number = 10080;
+        const secondsUntilJwtExpires: number = minutesUntilJwtExpires * 60;
+        const nowInMs: number = Date.now();
+        const expirationTimeInSeconds = Math.floor(nowInMs / 1000) + secondsUntilJwtExpires;
+
+        return {
+            jti: uuidv4(),
+            userId: user.id,
+            exp: expirationTimeInSeconds
+        }
+    }
+
 }

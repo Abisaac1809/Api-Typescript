@@ -20,4 +20,5 @@ authRouter.post("/register", validateSchema(UserToCreate), authController.regist
 authRouter.post("/login", validateSchema(UserToLogin), authController.login);
 authRouter.post("/logout", checkAuth, authController.logout);
 
+
 export default authRouter;
