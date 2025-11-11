@@ -1,10 +1,12 @@
 import {Request, Response} from "express";
+import jwt, {JwtPayload} from "jsonwebtoken";
 
 import IAuthService from "../interfaces/IServices/IAuthService";
 import PublicUser from "../types/publicUser";
 
 import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/conflictErrors";
-import { JWTParser } from "../utils/jwtParser";
+import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
+import { RefreshTokenPayload, RefreshTokenPayloadType } from "../schemas/authTokens";
 
 export default class AuthController {
     private authService: IAuthService;
@@ -31,7 +33,7 @@ export default class AuthController {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === "production",
                         sameSite: "strict",
-                        maxAge: 3600
+                        maxAge: 604800
                     })
                     .json({
                         message: "New user created", 
@@ -72,7 +74,7 @@ export default class AuthController {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === "production",
                         sameSite: "strict",
-                        maxAge: 3600
+                        maxAge: 604800
                     })
                     .json({
                         message: "OK", 
@@ -106,5 +108,43 @@ export default class AuthController {
             .status(204)
             .end();
     };
+
+    refreshToken = async (req: Request, res: Response) => {
+        if (!process.env.JWT_SECRET_KEY) {
+            throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");            
+        }
+
+        const token = req.cookies.refresh_token;
+        const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+
+        if (!token) {
+            res
+                .status(401)
+                .json({
+                    message: "Acceso Denegado"
+                })
+        }
+
+        try {
+            const payload: string | JwtPayload  = jwt.verify(token, JWT_SECRET_KEY);
+            const refreshTokenPayload: RefreshTokenPayloadType = RefreshTokenPayload.parse(payload);
+            const newAccessToken: string = await this.authService.refreshAndGetNewAccessToken(refreshTokenPayload);
+            return res
+                    .status(200)
+                    .cookie("access_token", newAccessToken, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                        sameSite: "strict",
+                        maxAge: 3600
+                    })
+        }
+        catch (error) {
+            return res
+                    .status(500)
+                    .json({
+                        message: "Internal Server Error", 
+                    });
+        }
+    }
 }
 

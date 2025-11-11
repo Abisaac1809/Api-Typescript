@@ -24,3 +24,21 @@ export class UnauthorizedRequestError extends Error {
         super(message);
     }
 }
+
+export class InvalidSessionError extends Error {
+    public readonly name: string = "InvalidSessionError";
+    public readonly status:number = 401;
+
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+export class ValidationError extends Error {
+    public readonly name: string = "ValidationError"
+    public readonly statusCode: number = 400;
+    
+    constructor(message: string) {
+        super(message)
+    }
+}

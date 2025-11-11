@@ -5,14 +5,14 @@ import { MissingEnvironmentVariableError } from "../errors/internalServerErrors"
 import { UnauthorizedRequestError } from "../errors/conflictErrors";
 
 export function checkAuth(req: Request, res: Response, next: NextFunction) {
-    if ( !process.env.JWT_SECRET_KEY) {
+    if (!process.env.JWT_SECRET_KEY) {
         throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
     }
 
     const token: string = req.cookies.access_token;
     const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
-    if ( !token ) {
+    if (!token) {
         res
             .status(401)
             .json({

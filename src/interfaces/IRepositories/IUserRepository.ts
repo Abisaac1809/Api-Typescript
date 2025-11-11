@@ -1,4 +1,5 @@
-import { User, UserToCreateType } from "../../schemas/users.schemas";
+import { UserToCreateType } from "../../schemas/users.schemas";
+import { User } from "../../entities/User.entity";
 
 export default interface IUserRepository {
     createUser(user: UserToCreateType): Promise<User>;

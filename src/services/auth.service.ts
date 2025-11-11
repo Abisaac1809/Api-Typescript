@@ -3,19 +3,25 @@ import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
 
-import { User, UserToCreateType, UserToLoginType } from "../schemas/users.schemas";
-import { AccessTokenPayload, RefreshTokenPayload } from "../types/authTokensPayload";
+import { User } from "../entities/User.entity";
+import { UserType, UserToCreateType, UserToLoginType } from "../schemas/users.schemas";
+import Session from "../entities/Session.entity";
+import { AccessTokenPayloadType, RefreshTokenPayloadType } from "../schemas/authTokens";
 import PublicUser from "../types/publicUser";
+import ISessionRepository from "../interfaces/IRepositories/ISessionRepository";
 import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
 import { MissingEnvironmentVariableError,} from "../errors/internalServerErrors";
-import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/conflictErrors";
+import { InvalidCredentialsError, InvalidSessionError, UserAlreadyExistsError } from "../errors/conflictErrors";
+import IAuthService from "../interfaces/IServices/IAuthService";
 
-export default class AuthService {
+export default class AuthService implements IAuthService{
     private userRepository: IUserRepository;
+    private sessionRepository: ISessionRepository;
 
-    constructor(userRepository: IUserRepository) {
+    constructor(userRepository: IUserRepository, sessionRepository: ISessionRepository) {
         this.userRepository = userRepository;
+        this.sessionRepository = sessionRepository;
     }
 
     async register(user: UserToCreateType): Promise<PublicUser> {
@@ -33,7 +39,7 @@ export default class AuthService {
             const userID: string  = uuidv4();
             const hashedPassword: string = await hash(user.password, SALT_ROUNDS);
             
-            const newUserToCreate: User = {
+            const newUserToCreate: UserType = {
                 ...user,
                 id: userID,
                 password: hashedPassword
@@ -76,6 +82,31 @@ export default class AuthService {
         const publicUser: PublicUser = this.toPublicUser(user);
         return publicUser;
     }
+    
+    async refreshAndGetNewAccessToken(refreshTokenPayload: RefreshTokenPayloadType): Promise<string> {
+        const session: (Session | undefined) = await this.sessionRepository.findSessionByToken(refreshTokenPayload.jti);
+        const nowInSeconds: number = Math.floor(Date.now() / 1000);
+
+        if (!session) {
+            throw new InvalidSessionError("La sesión es inválida");
+        }
+        if (refreshTokenPayload.userId !== session.userId) {
+            throw new InvalidSessionError("La sesión es inválida");
+        }
+        if (session.exp <= nowInSeconds) {
+            throw new InvalidSessionError("La sesión ha expirado");
+        }
+
+        const user: (User | undefined) = await this.userRepository.findUserById(session.userId);
+
+        if (!user) {
+            throw new InvalidSessionError("El usuario no existe");
+        }
+
+        const publicUser: PublicUser = this.toPublicUser(user);
+        const token: string = this.getAccessToken(publicUser);
+        return token;
+    }
 
     private toPublicUser(user: User): PublicUser {
         return {
@@ -90,17 +121,17 @@ export default class AuthService {
     }
 
     public getAccessToken(user: PublicUser): string {
-        if ( !process.env.JWT_SECRET_KEY) {
+        if (!process.env.JWT_SECRET_KEY) {
             throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
         }
 
         const JWT_SECRET_KEY: string = process.env.JWT_SECRET_KEY;
-        const access_token_payload: AccessTokenPayload = this.getAccessTokenPayload(user);
-        const token: string = jwt.sign(access_token_payload, JWT_SECRET_KEY, {"expiresIn": "1h"})
+        const access_token_payload: AccessTokenPayloadType = this.getAccessTokenPayload(user);
+        const token: string = jwt.sign(access_token_payload, JWT_SECRET_KEY, {"expiresIn": "1h"});
         return token;
     }
 
-    private getAccessTokenPayload(user: PublicUser): AccessTokenPayload {
+    private getAccessTokenPayload(user: PublicUser): AccessTokenPayloadType {
         const minutesUntilJwtExpires: number = 15;
         const secondsUntilJwtExpires: number = minutesUntilJwtExpires * 60;
         const nowInMs: number = Date.now();
@@ -110,21 +141,22 @@ export default class AuthService {
             userId: user.id,
             iat: new Date().toISOString(),
             exp: expirationTimeInSeconds
-        }
+        };
     }
 
     public getRefreshToken(publicUser: PublicUser): string {
-        if ( !process.env.JWT_SECRET_KEY) {
+        if (!process.env.JWT_SECRET_KEY) {
             throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
         }
 
         const JWT_SECRET_KEY: string = process.env.JWT_SECRET_KEY;
-        const refresh_token_payload: RefreshTokenPayload = this.getRefreshTokenPayload(publicUser);
-        const token: string = jwt.sign(refresh_token_payload, JWT_SECRET_KEY, {"expiresIn": "7d"})
+        const refreshTokenPayload: RefreshTokenPayloadType = this.getRefreshTokenPayload(publicUser);
+        const token: string = jwt.sign(refreshTokenPayload, JWT_SECRET_KEY, {"expiresIn": "7d"});
+        this.sessionRepository.createSession(refreshTokenPayload);
         return token;
     }
 
-    private getRefreshTokenPayload(user: PublicUser): RefreshTokenPayload {
+    private getRefreshTokenPayload(user: PublicUser): RefreshTokenPayloadType {
         const minutesUntilJwtExpires: number = 10080;
         const secondsUntilJwtExpires: number = minutesUntilJwtExpires * 60;
         const nowInMs: number = Date.now();
@@ -134,7 +166,7 @@ export default class AuthService {
             jti: uuidv4(),
             userId: user.id,
             exp: expirationTimeInSeconds
-        }
+        };
     }
 
 }

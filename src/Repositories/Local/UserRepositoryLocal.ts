@@ -1,5 +1,6 @@
-import { User } from "../schemas/users.schemas";
-import IUserRepository from "../interfaces/IRepositories/IUserRepository";
+import { UserType } from "../../schemas/users.schemas";
+import { User } from "../../entities/User.entity";
+import IUserRepository from "../../interfaces/IRepositories/IUserRepository";
 
 export default class UserRepositoryLocal implements IUserRepository {
     private users: User[];
@@ -8,9 +9,10 @@ export default class UserRepositoryLocal implements IUserRepository {
         this.users = [];
     }
 
-    async createUser(user: User): Promise<User> {
-        this.users.push(user);
-        return user;
+    async createUser(user: UserType): Promise<User> {
+        const newUser = new User(user);
+        this.users.push(newUser);
+        return newUser;
         ;
     }
 
