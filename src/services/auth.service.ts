@@ -85,16 +85,12 @@ export default class AuthService implements IAuthService{
     
     async refreshAndGetNewAccessToken(refreshTokenPayload: RefreshTokenPayloadType): Promise<string> {
         const session: (Session | undefined) = await this.sessionRepository.findSessionByToken(refreshTokenPayload.jti);
-        const nowInSeconds: number = Math.floor(Date.now() / 1000);
 
         if (!session) {
             throw new InvalidSessionError("La sesión es inválida");
         }
         if (refreshTokenPayload.userId !== session.userId) {
             throw new InvalidSessionError("La sesión es inválida");
-        }
-        if (session.exp <= nowInSeconds) {
-            throw new InvalidSessionError("La sesión ha expirado");
         }
 
         const user: (User | undefined) = await this.userRepository.findUserById(session.userId);
@@ -135,12 +131,11 @@ export default class AuthService implements IAuthService{
         const minutesUntilJwtExpires: number = 15;
         const secondsUntilJwtExpires: number = minutesUntilJwtExpires * 60;
         const nowInMs: number = Date.now();
-        const expirationTimeInSeconds = Math.floor(nowInMs / 1000) + secondsUntilJwtExpires;
+        const nowInSeconds: number = Math.floor(nowInMs / 1000);
+        const expirationTimeInSeconds: number = nowInSeconds + secondsUntilJwtExpires;
 
         return {
             userId: user.id,
-            iat: new Date().toISOString(),
-            exp: expirationTimeInSeconds
         };
     }
 
@@ -165,7 +160,6 @@ export default class AuthService implements IAuthService{
         return {
             jti: uuidv4(),
             userId: user.id,
-            exp: expirationTimeInSeconds
         };
     }
 

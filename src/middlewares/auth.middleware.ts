@@ -13,7 +13,7 @@ export function checkAuth(req: Request, res: Response, next: NextFunction) {
     const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
     if (!token) {
-        res
+        return res
             .status(401)
             .json({
                 message: "Acceso Denegado"
