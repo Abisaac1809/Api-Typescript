@@ -3,7 +3,7 @@ import jwt, { JsonWebTokenError, JwtPayload, TokenExpiredError } from "jsonwebto
 import { v4 as uuidv4 } from "uuid";
 
 import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
-import { UnauthorizedRequestError } from "../errors/conflictErrors";
+import { UnauthorizedRequestError } from "../errors/ExternalErrors";
 
 export class JWTParser {
     static getPayload(req: Request): (string | JwtPayload) {

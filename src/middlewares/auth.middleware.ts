@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 
 import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
-import { UnauthorizedRequestError } from "../errors/conflictErrors";
+import { UnauthorizedRequestError } from "../errors/ExternalErrors";
 
 export function checkAuth(req: Request, res: Response, next: NextFunction) {
     if (!process.env.JWT_SECRET_KEY) {

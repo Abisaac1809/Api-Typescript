@@ -12,7 +12,7 @@ import ISessionRepository from "../interfaces/IRepositories/ISessionRepository";
 import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
 import { MissingEnvironmentVariableError,} from "../errors/internalServerErrors";
-import { InvalidCredentialsError, InvalidSessionError, UserAlreadyExistsError } from "../errors/conflictErrors";
+import { InvalidCredentialsError, InvalidSessionError, UserAlreadyExistsError } from "../errors/ExternalErrors";
 import IAuthService from "../interfaces/IServices/IAuthService";
 
 export default class AuthService implements IAuthService{

@@ -1,5 +1,5 @@
 import { UserType } from "../schemas/users.schemas";
-import { ValidationError } from "../errors/conflictErrors";
+import { ValidationError } from "../errors/ExternalErrors";
 
 export class User {
     private readonly _id: string;

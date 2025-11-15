@@ -1,4 +1,14 @@
-export class UserAlreadyExistsError extends Error {
+export abstract class ExternalError extends Error {
+    public abstract readonly name: string;
+    public abstract readonly statusCode: number;
+
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+
+export class UserAlreadyExistsError extends ExternalError {
     public readonly name: string = "UserAlreadyExists";
     public readonly statusCode: number = 409;
 
@@ -7,7 +17,7 @@ export class UserAlreadyExistsError extends Error {
     }
 }
 
-export class InvalidCredentialsError extends Error {
+export class InvalidCredentialsError extends ExternalError {
     public readonly name: string = "InvalidCredentials";
     public readonly statusCode: number = 401;
 
@@ -16,7 +26,7 @@ export class InvalidCredentialsError extends Error {
     }
 }
 
-export class UnauthorizedRequestError extends Error {
+export class UnauthorizedRequestError extends ExternalError {
     public readonly name: string = "UnauthorizedRequestError";
     public readonly statusCode: number = 401;
 
@@ -25,16 +35,16 @@ export class UnauthorizedRequestError extends Error {
     }
 }
 
-export class InvalidSessionError extends Error {
+export class InvalidSessionError extends ExternalError {
     public readonly name: string = "InvalidSessionError";
-    public readonly status:number = 401;
+    public readonly statusCode: number = 401;
 
     constructor(message: string) {
         super(message);
     }
 }
 
-export class ValidationError extends Error {
+export class ValidationError extends ExternalError {
     public readonly name: string = "ValidationError"
     public readonly statusCode: number = 400;
     

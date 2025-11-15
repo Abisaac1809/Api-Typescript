@@ -1,10 +1,10 @@
-import {Request, Response} from "express";
+import {NextFunction, Request, Response} from "express";
 import jwt, {JwtPayload} from "jsonwebtoken";
 
 import IAuthService from "../interfaces/IServices/IAuthService";
 import PublicUser from "../types/publicUser";
 
-import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/conflictErrors";
+import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/ExternalErrors";
 import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
 import { RefreshTokenPayload, RefreshTokenPayloadType } from "../schemas/authTokens";
 
@@ -15,7 +15,7 @@ export default class AuthController {
         this.authService = authService;
     }
 
-    register = async (req: Request, res: Response) => {
+    register = async (req: Request, res: Response, next: NextFunction) => {
         try {
             let response: Response = res;
 
@@ -37,23 +37,11 @@ export default class AuthController {
                     });
         }
         catch (error) {
-            if (error instanceof UserAlreadyExistsError) {
-                return res
-                        .status(409)
-                        .json({
-                            message: error.message
-                        });
-            }
-            console.log(error)
-            return res
-                    .status(500)
-                    .json({
-                        message: "Internal Server Error", 
-                    });
+            next(error);
         }
     }
 
-    login = async (req: Request, res: Response) => {        
+    login = async (req: Request, res: Response, next: NextFunction) => {        
         try {
             let response: Response = res;
 
@@ -75,18 +63,7 @@ export default class AuthController {
                     });
         }
         catch (error) {
-            if (error instanceof InvalidCredentialsError) {
-                return res
-                        .status(error.statusCode)
-                        .json({
-                            message: error.message
-                        });
-            }
-            return res
-                    .status(500)
-                    .json({
-                        message: "Internal Server Error", 
-                    });
+            next(error);
         }
     }    
 
@@ -137,7 +114,7 @@ export default class AuthController {
             });
     }
 
-    refreshToken = async (req: Request, res: Response) => {
+    refreshToken = async (req: Request, res: Response, next: NextFunction) => {
         if (!process.env.JWT_SECRET_KEY) {
             throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");            
         }
@@ -168,12 +145,7 @@ export default class AuthController {
                     .end();
         }
         catch (error) {
-            return res
-                    .status(500)
-                    .json({
-                        message: "Internal Server Error", 
-                    });
+            next(error);
         }
     }
 }
-
