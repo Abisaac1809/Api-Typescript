@@ -1,15 +1,23 @@
 import winston, { Logger } from 'winston';
 import ILogger from '../../interfaces/IUtils/ILogger';
 
-export class ConsoleLogger implements ILogger {
+const { combine, timestamp, json, errors } = winston.format;
+
+export default class ConsoleLogger implements ILogger {
     private logger: Logger; 
 
     constructor() {
         this.logger = winston.createLogger({
             levels: winston.config.syslog.levels,
             level: "info",
-            format: winston.format.json(),
+            format: combine(errors({stack:true}), timestamp(), json()),
             transports: [
+                new winston.transports.Console()
+            ],
+            exceptionHandlers: [
+                new winston.transports.Console()
+            ],
+            rejectionHandlers: [
                 new winston.transports.Console()
             ]
         })
