@@ -4,7 +4,6 @@ import jwt, {JwtPayload} from "jsonwebtoken";
 import IAuthService from "../interfaces/IServices/IAuthService";
 import PublicUser from "../types/publicUser";
 
-import { InvalidCredentialsError, UserAlreadyExistsError } from "../errors/ExternalErrors";
 import { MissingEnvironmentVariableError } from "../errors/internalServerErrors";
 import { RefreshTokenPayload, RefreshTokenPayloadType } from "../schemas/authTokens";
 
@@ -87,13 +86,13 @@ export default class AuthController {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "strict",
-                maxAge: 3600
+                maxAge: 3600000
             })
             .cookie("refresh_token", refeshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "strict",
-                maxAge: 604800
+                maxAge: 604800000
             })
     }
 
@@ -104,13 +103,13 @@ export default class AuthController {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "strict",
-                maxAge: 3600
+                maxAge: 3600000
             })
             .clearCookie("refresh_token", {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "strict",
-                maxAge: 604800
+                maxAge: 604800000
             });
     }
 
@@ -140,7 +139,7 @@ export default class AuthController {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === "production",
                         sameSite: "strict",
-                        maxAge: 3600
+                        maxAge: 3600000
                     })
                     .end();
         }

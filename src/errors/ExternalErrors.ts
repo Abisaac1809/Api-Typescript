@@ -52,3 +52,12 @@ export class ValidationError extends ExternalError {
         super(message)
     }
 }
+
+export class AccountLockedError extends ExternalError {
+    public readonly name: string = "AccountLockedError";
+    public readonly statusCode: number = 403;
+
+    constructor(message: string) {
+        super(message);
+    }
+}

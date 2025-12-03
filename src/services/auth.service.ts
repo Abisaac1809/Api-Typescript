@@ -11,17 +11,22 @@ import PublicUser from "../types/publicUser";
 import ISessionRepository from "../interfaces/IRepositories/ISessionRepository";
 import IUserRepository from "../interfaces/IRepositories/IUserRepository";
 
+import { logger } from "../server";
 import { MissingEnvironmentVariableError,} from "../errors/internalServerErrors";
-import { InvalidCredentialsError, InvalidSessionError, UserAlreadyExistsError } from "../errors/ExternalErrors";
+import { AccountLockedError, InvalidCredentialsError, InvalidSessionError, UserAlreadyExistsError } from "../errors/ExternalErrors";
 import IAuthService from "../interfaces/IServices/IAuthService";
+import FailedLoginAttempts from "../entities/FailedLoginAttempts.entity";
+import IFailedLoginAttemptsRepositoy from "../interfaces/IRepositories/IFailedLoginAttemptsRepository";
 
 export default class AuthService implements IAuthService{
     private userRepository: IUserRepository;
     private sessionRepository: ISessionRepository;
+    private failedLoginAttemptsRepository: IFailedLoginAttemptsRepositoy;
 
-    constructor(userRepository: IUserRepository, sessionRepository: ISessionRepository) {
+    constructor(userRepository: IUserRepository, sessionRepository: ISessionRepository, failedAttempts: IFailedLoginAttemptsRepositoy) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
+        this.failedLoginAttemptsRepository = failedAttempts;
     }
 
     async register(user: UserToCreateType): Promise<PublicUser> {
@@ -69,13 +74,36 @@ export default class AuthService implements IAuthService{
             user = await this.userRepository.findUserByIdentificationNumber(identificationNumber);
         }
 
-        if ( !user ) {
+        if (!user) {
             throw new InvalidCredentialsError("Credenciales inválidas");
         }
 
+        let failedLoginAttemptsLog: (FailedLoginAttempts | undefined) = await this.failedLoginAttemptsRepository.findFailedLoginAttemptsByUserId(user.id);
+        
         const passwordIsValid: boolean = await compare(userToLogin.password, user.password);
 
-        if ( !passwordIsValid ) {
+        if (!passwordIsValid && !failedLoginAttemptsLog) {
+            failedLoginAttemptsLog = await this.failedLoginAttemptsRepository.createFailedLoginAttempts(user.id);
+            failedLoginAttemptsLog.failedAttepmts++;
+            this.failedLoginAttemptsRepository.save(failedLoginAttemptsLog)
+        }
+
+        const nowInMs: number = Date.now();
+        if (nowInMs < failedLoginAttemptsLog?.lockedUntilMs!) {
+            throw new AccountLockedError("The account is temporarily blocked");
+        }
+
+        if (!passwordIsValid && failedLoginAttemptsLog) {
+            if(failedLoginAttemptsLog.failedAttepmts === 5) {
+                failedLoginAttemptsLog.lockedUntilMs = nowInMs + 5 * 60 * 1000;
+                failedLoginAttemptsLog.failedAttepmts = 0;
+                this.failedLoginAttemptsRepository.save(failedLoginAttemptsLog)
+            }
+            else {
+                const milisecondsToSleep: number = this.getDelayForAttempt(failedLoginAttemptsLog.failedAttepmts);
+                await this.sleep(milisecondsToSleep);
+                failedLoginAttemptsLog.failedAttepmts++;
+            }
             throw new InvalidCredentialsError("Credenciales inválidas");
         }
 
@@ -104,6 +132,17 @@ export default class AuthService implements IAuthService{
         return token;
     }
 
+    private getDelayForAttempt(failedAttempts: number): number {
+        if (failedAttempts <= 1) return 0;
+        else if (failedAttempts === 2) return 500;
+        else if (failedAttempts === 3) return 1000;
+        return 3000;
+    }
+
+    private async sleep(milisecondsToSleep: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, milisecondsToSleep));
+    }
+
     private toPublicUser(user: User): PublicUser {
         return {
             id: user.id,
@@ -128,12 +167,6 @@ export default class AuthService implements IAuthService{
     }
 
     private getAccessTokenPayload(user: PublicUser): AccessTokenPayloadType {
-        const minutesUntilJwtExpires: number = 15;
-        const secondsUntilJwtExpires: number = minutesUntilJwtExpires * 60;
-        const nowInMs: number = Date.now();
-        const nowInSeconds: number = Math.floor(nowInMs / 1000);
-        const expirationTimeInSeconds: number = nowInSeconds + secondsUntilJwtExpires;
-
         return {
             userId: user.id,
         };
@@ -152,11 +185,6 @@ export default class AuthService implements IAuthService{
     }
 
     private getRefreshTokenPayload(user: PublicUser): RefreshTokenPayloadType {
-        const minutesUntilJwtExpires: number = 10080;
-        const secondsUntilJwtExpires: number = minutesUntilJwtExpires * 60;
-        const nowInMs: number = Date.now();
-        const expirationTimeInSeconds = Math.floor(nowInMs / 1000) + secondsUntilJwtExpires;
-
         return {
             jti: uuidv4(),
             userId: user.id,

@@ -8,7 +8,7 @@ export function checkAuth(req: Request, res: Response, next: NextFunction) {
     if (!process.env.JWT_SECRET_KEY) {
         throw new MissingEnvironmentVariableError("JWT_SECRET_KEY was not implemented as a enviromental variable");
     }
-
+    
     const token: string = req.cookies.access_token;
     const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
@@ -26,7 +26,7 @@ export function checkAuth(req: Request, res: Response, next: NextFunction) {
     }
     catch (error) {
         if ((error instanceof JsonWebTokenError) || (error instanceof TokenExpiredError)) {
-            res
+            return res
             .status(401)
             .json({
                 message: "Acceso Denegado"
